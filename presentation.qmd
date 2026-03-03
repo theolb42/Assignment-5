@@ -1,0 +1,125 @@
+---
+title: "World Development Indicators Analysis"
+author: "Theo Burns"
+date: 2/25/2026
+format:
+  revealjs:
+    theme: league
+    transition: zoom
+---
+
+```{r, echo=FALSE}
+library(tidyverse)
+wdi <- read_csv("wdi.csv")
+```
+
+## Introduction
+
+-   This slideshow will be an analysis of the World Bank World Development Indicators dataset
+-   The 3 indicators I have chosen to focus on are:
+    -   GDP per Capita
+    -   Inflation Rate
+    -   Unemployment Rate
+
+## GDP per Capita
+
+```{r}
+#| echo: false
+#| fig-cap: "Distribution of GDP per Capita across countries. Data source: World Bank World Development Indicators."
+#| fig-label: fig-gdp-hist
+
+ggplot(wdi, aes(x = gdp_per_capita)) +
+  geom_histogram(bins = 30) +
+  labs(
+    title = "Distribution of GDP per Capita",
+    x = "GDP per Capita (USD)",
+    y = "Number of Countries"
+  )
+```
+
+-   GDP per capita is right skewed
+
+-   This indicates that most of the world is much poorer (on a per population basis) than the few wealthier countries
+
+## Inflation Rate
+
+```{r}
+#| echo: false
+#| fig-cap: "Distribution of Inflation Rate across countries. Data source: World Bank World Development Indicators."
+#| fig-label: fig-inflation-hist
+
+ggplot(wdi, aes(x = inflation_rate)) +
+  geom_histogram(bins = 50) +
+  labs(
+    title = "Inflation Rate",
+    x = "Inflation rate",
+    y = "Number of Countries"
+  )
+```
+
+-   The distribution of inflation appears to be slightly right skewed, but much more normal than that of GDP per capita
+
+## Unemployment Rate
+
+```{r}
+#| echo: false
+#| fig-cap: "Distribution of Unemployment Rate across countries. Data source: World Bank World Development Indicators."
+#| fig-label: fig-unemployment-hist
+
+ggplot(wdi, aes(x = unemployment_rate)) +
+  geom_histogram(bins = 30) +
+  labs(
+    title = "Distribution of Unemployment rate",
+    x = "Unemployment rate",
+    y = "Number of Countries"
+  )
+```
+
+-    The unemployment rate distribution is right skewed and shows that a majority of the unemployment data is relatively low
+
+-   Coupled with the observation of most countries having very low GDP per capita however, this potentially means that massive amounts of people are working for very poor wages.
+
+## GDP per Capita plotted against Inflation Rate
+
+```{r}
+#| echo: false
+#| fig-cap: "Relationship between GDP per capita and life expectancy across countries. Data source: World Bank World Development Indicators."
+#| fig-label: fig-inflationrate-gdp
+
+ggplot(wdi, aes(x = gdp_per_capita, y = inflation_rate)) +
+  geom_point(alpha = 0.6) +
+  scale_x_log10() +
+  labs(
+    title = "Inflation Rate vs GDP per Capita",
+    x = "GDP per Capita (Log Scale, USD)",
+    y = "Inflation Rate (%)"
+  )
+```
+
+-    There is no observable relationship between GDP per Capita and inflation rate.
+
+## Top 10 Countries with the Highest Unemployment Rates
+
+```{r}
+#| echo: false
+#| fig-cap: "Top 10 countries by unemployment rate. Data source: World Bank World Development Indicators."
+#| fig-label: fig-top10-unemployment
+
+top10 <- wdi %>%
+  filter(!is.na(unemployment_rate)) %>%
+  arrange(desc(unemployment_rate)) %>%
+  slice_head(n = 10)
+
+ggplot(top10, aes(x = reorder(country, unemployment_rate), y = unemployment_rate)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top 10 Countries by Unemployment rate",
+    x = "Country",
+    y = "Unemployment Rate"
+  )
+```
+
+-   8 out of the top 10 countries with the highest unemployment rates are located in Africa.
+
+-   This is consistent with a map from the CIA World Factbook for 2015-2017, showing a concentration of nations with the worst employment rates in Africa

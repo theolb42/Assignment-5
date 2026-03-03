@@ -1,0 +1,158 @@
+---
+title: "Assignment"
+author: "Theo Burns"
+date: 2/25/2026
+format:
+  html:
+    toc: true
+    number-sections: true
+  pdf:
+    toc: true
+    number-sections: true
+execute:
+  echo: false
+  warning: false
+  message: false
+bibliography: references.bib
+---
+
+## 
+
+```{r}
+library(tidyverse)
+
+wdi <- read_csv("wdi.csv")
+glimpse(wdi)
+```
+
+```{r}
+summary(wdi$gdp_per_capita)
+```
+
+```{r}
+#| echo: false
+#| fig-cap: "Distribution of GDP per Capita across countries. Data source: World Bank World Development Indicators."
+#| fig-label: fig-gdp-hist
+
+ggplot(wdi, aes(x = gdp_per_capita)) +
+  geom_histogram(bins = 30) +
+  labs(
+    title = "Distribution of GDP per Capita",
+    x = "GDP per Capita (USD)",
+    y = "Number of Countries"
+  )
+```
+
+As seen in @fig-gdp-hist, the distribution of GDP per capita is the most noteworthy. It is right skewed, with a large portion of countries in the 2 lowest bars. This indicates that most of the world is much poorer (on a per population basis) than the few richer countries. From @tbl-summary, it can be seen that the mean is much higher than the median, consistent with a right skewed set of data.
+
+```{r}
+#| echo: false
+#| fig-cap: "Distribution of Inflation Rate across countries. Data source: World Bank World Development Indicators."
+#| fig-label: fig-inflation-hist
+
+ggplot(wdi, aes(x = inflation_rate)) +
+  geom_histogram(bins = 50) +
+  labs(
+    title = "Inflation Rate",
+    x = "Inflation rate",
+    y = "Number of Countries"
+  )
+```
+
+```{r}
+summary(wdi$inflation_rate)
+```
+
+As shown in @fig-inflation-hist, the distribution of inflation rate appears to be slightly right skewed, however it is much closer to a normal distribution than the GDP per capita data in @fig-gdp-hist.
+
+```{r}
+#| echo: false
+#| fig-cap: "Distribution of Unemployment Rate across countries. Data source: World Bank World Development Indicators."
+#| fig-label: fig-unemployment-hist
+
+ggplot(wdi, aes(x = unemployment_rate)) +
+  geom_histogram(bins = 30) +
+  labs(
+    title = "Distribution of Unemployment rate",
+    x = "Unemployment rate",
+    y = "Number of Countries"
+  )
+```
+
+```{r}
+summary(wdi$unemployment_rate)
+```
+
+@fig-unemployment-hist shows that the unemployment rate distribution is right skewed. This means that a majority of the unemployment data is relatively low, which is arguably an optimistic thing to observe. Coupled with the observation in @fig-gdp-hist of most countries having very low GDP per capita however, this potentially means that massive amounts of people are working for very poor wages.
+
+```{r}
+#| echo: false
+#| fig-cap: "Relationship between GDP per capita and inflation rate across countries. Data source: World Bank World Development Indicators."
+#| fig-label: fig-inflationrate-gdp
+
+ggplot(wdi, aes(x = gdp_per_capita, y = inflation_rate)) +
+  geom_point(alpha = 0.6) +
+  scale_x_log10() +
+  labs(
+    title = "Inflation Rate vs GDP per Capita",
+    x = "GDP per Capita (Log Scale, USD)",
+    y = "Inflation Rate (%)"
+  )
+```
+
+@fig-inflationrate-gdp appears to show that there is no observable relationship between GDP per Capita and inflation rate. Rising GDP per capita is known to lead to increasing inflation [@xiong2023], so this is an interesting result. Xong's finding, however, pertains to trends within countries rather than across countries, so the two findings are not necessarily conflicting.
+
+```{r}
+#| echo: false
+#| fig-cap: "Top 10 countries by unemployment rate. Data source: World Bank World Development Indicators."
+#| fig-label: fig-top10-unemployment
+
+top10 <- wdi %>%
+  filter(!is.na(unemployment_rate)) %>%
+  arrange(desc(unemployment_rate)) %>%
+  slice_head(n = 10)
+
+ggplot(top10, aes(x = reorder(country, unemployment_rate), y = unemployment_rate)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Top 10 Countries by Unemployment rate",
+    x = "Country",
+    y = "Unemployment Rate"
+  )
+```
+
+As shown in @fig-top10-unemployment, 8 out of the top 10 countries with the highest unemployment rates are located in Africa. This is consistent with a map from the CIA World Factbook for 2015-2017, showing a concentration of nations with the worst employment rates in Africa [@factsmaps2018]. @tbl-summary provides key summary statistics for all three indicators.
+
+```{r}
+### Key Statistics for my 3 Indicators of Interest
+```
+
+```{r}
+#| echo: false
+#| tbl-cap: "Table 1. Summary statistics for selected World Development Indicators. Data source: World Bank World Development Indicators."
+#| label: tbl-summary
+
+library(dplyr)
+library(tidyr)
+library(knitr)
+
+summary_tbl <- wdi %>%
+  summarise(
+    `GDP per Capita (USD)` = list(gdp_per_capita),
+    `Life Expectancy (Years)` = list(life_expectancy),
+    `Unemployment Rate (%)` = list(unemployment_rate)
+  ) %>%
+  pivot_longer(cols = everything(), names_to = "Indicator", values_to = "values") %>%
+  mutate(
+    N = sapply(values, function(x) sum(!is.na(x))),
+    Mean = sapply(values, function(x) mean(x, na.rm = TRUE)),
+    Median = sapply(values, function(x) median(x, na.rm = TRUE)),
+    Min = sapply(values, function(x) min(x, na.rm = TRUE)),
+    Max = sapply(values, function(x) max(x, na.rm = TRUE))
+  ) %>%
+  select(Indicator, N, Mean, Median, Min, Max) %>%
+  mutate(across(where(is.numeric), ~ round(.x, 2)))
+
+kable(summary_tbl)
+```
